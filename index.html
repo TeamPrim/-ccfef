@@ -3,18 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Juego de Pelea</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Pelea 2 Jugadores</title>
+    <style>
+        body { text-align: center; background-color: black; color: white; }
+        canvas { background: grey; display: block; margin: auto; }
+    </style>
 </head>
 <body>
-    <div id="game-area">
-        <div id="player1" class="player"></div>
-        <div id="player2" class="player"></div>
-    </div>
-    <div id="health-display">
-        <div>Jugador 1: <span id="player1-health">100</span>%</div>
-        <div>Jugador 2: <span id="player2-health">100</span>%</div>
-    </div>
-    <script src="script.js"></script>
+    <h1>Juego de Pelea 2 Jugadores</h1>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        
+        class Player {
+            constructor(x, color, leftKey, rightKey, jumpKey, attackKey) {
+                this.x = x;
+                this.y = 300;
+                this.width = 50;
+                this.height = 50;
+                this.color = color;
+                this.health = 100;
+                this.speed = 5;
+                this.isJumping = false;
+                this.velocityY = 0;
+                this.attackKey = attackKey;
+                this.controls = { left: leftKey, right: rightKey, jump: jumpKey };
+            }
+            
+            move(keys) {
+                if (keys[this.controls.left]) this.x -= this.speed;
+                if (keys[this.controls.right]) this.x += this.speed;
+                if (keys[this.controls.jump] && !this.isJumping) {
+                    this.isJumping = true;
+                    this.velocityY = -10;
+                }
+            }
+            
+            update() {
+                if (this.isJumping) {
+                    this.y += this.velocityY;
+                    this.velocityY += 0.5;
+                    if (this.y >= 300) {
+                        this.y = 300;
+                        this.isJumping = false;
+                    }
+                }
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+            
+            attack(opponent) {
+                if (Math.abs(this.x - opponent.x) < 60) {
+                    opponent.health -= 10;
+                }
+            }
+        }
+        
+        let keys = {};
+        let player1 = new Player(100, "blue", "a", "d", "w", " ");
+        let player2 = new Player(600, "red", "ArrowLeft", "ArrowRight", "ArrowUp", "Enter");
+        
+        window.addEventListener("keydown", (e) => {
+            keys[e.key] = true;
+            if (e.key === player1.attackKey) player1.attack(player2);
+            if (e.key === player2.attackKey) player2.attack(player1);
+        });
+        
+        window.addEventListener("keyup", (e) => { keys[e.key] = false; });
+        
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = "white";
+            ctx.fillText(`Jugador 1: ${player1.health}`, 50, 50);
+            ctx.fillText(`Jugador 2: ${player2.health}`, 650, 50);
+            
+            player1.move(keys);
+            player2.move(keys);
+            
+            player1.update();
+            player2.update();
+            
+            player1.draw();
+            player2.draw();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        gameLoop();
+    </script>
 </body>
 </html>
